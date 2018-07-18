@@ -143,11 +143,20 @@ class FFStream:
         """
         frame_count = 0
         if self.is_video() or self.is_audio():
-            if self.__dict__['nb_frames']:
+            if self.__dict__['nb_frames'] and self.__dict__['nb_frames'] != 'N/A':
                 try:
                     frame_count = int(self.__dict__['nb_frames'])
                 except ValueError:
                     raise FFProbeError('None integer frame count')
+
+            elif self.__dict__['TAG:NUMBER_OF_FRAMES'] and self.__dict__['TAG:NUMBER_OF_FRAMES'] != 'N/A':
+                try:
+                    frame_count = int(self.__dict__['TAG:NUMBER_OF_FRAMES'])
+                except ValueError:
+                    raise FFProbeError('None integer frame count')
+            else:
+                raise FFProbeError('Frame count for stream not found')
+
         return frame_count
 
     def duration_seconds(self):
@@ -157,11 +166,20 @@ class FFStream:
         """
         duration = 0.0
         if self.is_video() or self.is_audio():
-            if self.__dict__['duration']:
+            if self.__dict__['duration'] and self.__dict__['duration'] != 'N/A':
                 try:
                     duration = float(self.__dict__['duration'])
                 except ValueError:
                     raise FFProbeError('None numeric duration')
+            elif self.__dict__['TAG:DURATION'] and self.__dict__['TAG:DURATION'] != 'N/A':
+                try:
+                    hours, minutes, seconds = self.__dict__['TAG:DURATION'].split(":")
+                    duration = (int(hours) * 3600) + (int(minutes) * 60) + float(seconds)
+                except ValueError:
+                    raise FFProbeError('None integer frame count')
+            else:
+                raise FFProbeError('Duration for stream not found')
+
         return duration
 
     def language(self):
@@ -205,9 +223,15 @@ class FFStream:
         Returns bit_rate as an integer in bps
         """
         b = 0
-        if self.__dict__['bit_rate']:
+        if self.__dict__['bit_rate'] and self.__dict__['bit_rate'] != 'N/A':
             try:
                 b = int(self.__dict__['bit_rate'])
             except ValueError:
                 raise FFProbeError('None integer bit_rate')
+        elif self.__dict__['TAG:BPS'] and self.__dict__['TAG:BPS'] != 'N/A':
+            try:
+                b = int(self.__dict__['TAG:BPS'])
+            except ValueError:
+                raise FFProbeError('None integer bit_rate')
+                
         return b
